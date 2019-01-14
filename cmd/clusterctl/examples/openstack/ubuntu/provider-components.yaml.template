@@ -17,6 +17,7 @@ metadata:
   namespace: openstack-provider-system
 data:
   clouds.yaml: $OPENSTACK_CLOUD_CONFIG
+  OS_CLOUD: $OS_CLOUD
 ---
 apiVersion: v1
 kind: Secret

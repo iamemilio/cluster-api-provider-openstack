@@ -221,6 +221,7 @@ if [[ "$OS" =~ "Linux" ]]; then
   WORKER_USER_DATA=$(echo "$WORKER_USER_DATA_PLAIN" \
     | sed -e "s/\$OPENSTACK_CLOUD_PROVIDER_CONF/$OPENSTACK_CLOUD_PROVIDER_CONF/" \
     | base64 -w0)
+  OS_CLOUD="$(echo $OS_CLOUD | base64 -w0)"
 elif [[ "$OS" =~ "Darwin" ]]; then
   OPENSTACK_CLOUD_CONFIG=$(echo "$OPENSTACK_CLOUD_CONFIG_PLAIN"|base64)
   OPENSTACK_CLOUD_PROVIDER_CONF=$(echo "$OPENSTACK_CLOUD_PROVIDER_CONF_PLAIN"|base64)
@@ -233,6 +234,7 @@ elif [[ "$OS" =~ "Darwin" ]]; then
   WORKER_USER_DATA=$(echo "$WORKER_USER_DATA_PLAIN" \
     | sed -e "s/\$OPENSTACK_CLOUD_PROVIDER_CONF/$OPENSTACK_CLOUD_PROVIDER_CONF/" \
     | base64)
+  OS_CLOUD="$(echo $OS_CLOUD | base64)"
 else
   echo "Unrecognized OS : $OS"
   exit 1
@@ -251,7 +253,7 @@ do
 done
 for file in `ls "${PROVIDER_MANAGER_DIR}"`
 do
-    sed "s/{OS_CLOUD}/$OS_CLOUD/g" "${PROVIDER_MANAGER_DIR}/${file}" >> "$PROVIDERCOMPONENT_GENERATED_FILE"
+    cat "${PROVIDER_MANAGER_DIR}/${file}" >> "$PROVIDERCOMPONENT_GENERATED_FILE"
     echo "---" >> "$PROVIDERCOMPONENT_GENERATED_FILE"
 done
 for file in `ls "${CLUSTER_MANAGER_DIR}"`
@@ -277,6 +279,7 @@ cat "$PROVIDERCOMPONENT_TEMPLATE_FILE" \
   | sed -e "s/\$MACHINE_CONTROLLER_SSH_PRIVATE/$MACHINE_CONTROLLER_SSH_PRIVATE/" \
   | sed -e "s/\$MASTER_USER_DATA/$MASTER_USER_DATA/" \
   | sed -e "s/\$WORKER_USER_DATA/$WORKER_USER_DATA/" \
+  | sed -e "s/\$OS_CLOUD/$OS_CLOUD/g" \
   >> "$PROVIDERCOMPONENT_GENERATED_FILE"
 
 if [[ "$OS" =~ "Linux" ]]; then

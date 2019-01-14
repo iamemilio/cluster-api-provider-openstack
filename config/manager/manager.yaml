@@ -70,7 +70,10 @@ spec:
           - name: USER
             value: root
           - name: OS_CLOUD
-            value: {OS_CLOUD}
+            valueFrom:
+              secretKeyRef:
+                name: cloud-config
+                key: OS_CLOUD
       volumes:
       - name: config
         hostPath:
