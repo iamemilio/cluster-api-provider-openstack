@@ -12,6 +12,7 @@ MACHINE+={{ .Machine.ObjectMeta.Name }}
 CLUSTER_DNS_DOMAIN={{ .Cluster.Spec.ClusterNetwork.ServiceDomain }}
 POD_CIDR={{ .PodCIDR }}
 SERVICE_CIDR={{ .ServiceCIDR }}
+OPENSTACK_CLOUD_PROVIDER_CONF={{ .CloudConf }}
 
 apt-get update
 apt-get install -y apt-transport-https prips

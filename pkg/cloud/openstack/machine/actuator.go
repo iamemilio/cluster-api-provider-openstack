@@ -96,6 +96,7 @@ func (oc *OpenstackClient) Create(ctx context.Context, cluster *clusterv1.Cluste
 	// get machine startup script
 	var ok bool
 	userData := []byte{}
+	cloudConf := []byte{}
 	if providerSpec.UserDataSecret != nil {
 		namespace := providerSpec.UserDataSecret.Namespace
 		if namespace == "" {
@@ -115,12 +116,22 @@ func (oc *OpenstackClient) Create(ctx context.Context, cluster *clusterv1.Cluste
 		if !ok {
 			return fmt.Errorf("Machine's userdata secret %v in namespace %v did not contain key %v", providerSpec.UserDataSecret.Name, namespace, UserDataKey)
 		}
+
+		cloudConfSecret, err := kubeClient.CoreV1().Secrets(namespace).Get("cluster-config", metav1.GetOptions{})
+		if err != nil {
+			return err
+		}
+
+		cloudConf, ok = cloudConfSecret.Data["cloud.conf"]
+		if !ok {
+			return fmt.Errorf("Machine's userdata secret %v in namespace %v did not contain key %v", "cluster-config", namespace, "cloud.conf")
+		}
 	}
 
 	var userDataRendered string
-	if len(userData) > 0 {
+	if len(userData) > 0 && len(cloudConf) > 0 {
 		if util.IsMaster(machine) {
-			userDataRendered, err = masterStartupScript(cluster, machine, string(userData))
+			userDataRendered, err = masterStartupScript(cluster, machine, string(userData), string(cloudConf))
 			if err != nil {
 				return oc.handleMachineError(machine, apierrors.CreateMachine(
 					"error creating Openstack instance: %v", err))
@@ -132,7 +143,7 @@ func (oc *OpenstackClient) Create(ctx context.Context, cluster *clusterv1.Cluste
 				return oc.handleMachineError(machine, apierrors.CreateMachine(
 					"error creating Openstack instance: %v", err))
 			}
-			userDataRendered, err = nodeStartupScript(cluster, machine, token, string(userData))
+			userDataRendered, err = nodeStartupScript(cluster, machine, token, string(userData), string(cloudConf))
 			if err != nil {
 				return oc.handleMachineError(machine, apierrors.CreateMachine(
 					"error creating Openstack instance: %v", err))

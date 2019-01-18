@@ -1,0 +1,36 @@
+kind: Kustomization
+apiVersion: v1
+generatorOptions:
+  disableNameSuffixHash: true
+
+resources:
+- ../../../../../../config/crd/openstackproviderconfig_v1alpha1.yaml
+- ../../../../../../config/rbac/rbac_role_binding.yaml
+- ../../../../../../config/rbac/rbac_role.yaml
+- ../../../../../../config/rbac/secrets_role_binding.yaml
+- ../../../../../../config/rbac/secrets_role.yaml
+- ../../../../../../config/manager/manager.yaml
+
+bases:
+- ../../../../../../vendor/sigs.k8s.io/cluster-api/config/default
+
+imageTags:
+  - name: gcr.io/k8s-cluster-api/cluster-api-controller
+    newTag: 0.0.0-alpha.4
+
+secretGenerator:
+- name: cloud-config
+  namespace: openstack-provider-system
+  commands:
+    clouds.yaml: "cat configs/clouds.yaml"
+  type: Opaque
+- name: cloud-selector
+  namespace: openstack-provider-system
+  commands:
+    OS_CLOUD: "cat configs/os_cloud.txt"
+  type: Opaque
+- name: cluster-config
+  namespace: openstack-provider-system
+  commands:
+    cloud.conf: "cat configs/cloud.conf"
+  type: Opaque

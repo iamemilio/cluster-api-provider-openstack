@@ -1,0 +1,19 @@
+kind: Kustomization
+apiVersion: v1
+generatorOptions:
+  disableNameSuffixHash: true
+
+bases:
+- ../../base
+
+secretGenerator:
+- name: worker-user-data
+  namespace: openstack-provider-system
+  type: Opaque
+  commands:
+    userData: "cat worker-user-data.sh"
+- name: master-user-data
+  namespace: openstack-provider-system
+  type: Opaque
+  commands:
+    userData: "cat master-user-data.sh"

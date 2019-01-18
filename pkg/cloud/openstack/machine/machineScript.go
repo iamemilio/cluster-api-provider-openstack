@@ -35,13 +35,14 @@ type setupParams struct {
 
 	PodCIDR           string
 	ServiceCIDR       string
+	CloudConf         string
 	GetMasterEndpoint func() (string, error)
 }
 
 func init() {
 }
 
-func masterStartupScript(cluster *clusterv1.Cluster, machine *clusterv1.Machine, script string) (string, error) {
+func masterStartupScript(cluster *clusterv1.Cluster, machine *clusterv1.Machine, script string, cloudConf string) (string, error) {
 	machineSpec, err := openstackconfigv1.MachineSpecFromProviderSpec(machine.Spec.ProviderSpec)
 	if err != nil {
 		return "", err
@@ -53,6 +54,7 @@ func masterStartupScript(cluster *clusterv1.Cluster, machine *clusterv1.Machine,
 		MachineSpec: machineSpec,
 		PodCIDR:     getSubnet(cluster.Spec.ClusterNetwork.Pods),
 		ServiceCIDR: getSubnet(cluster.Spec.ClusterNetwork.Services),
+		CloudConf:   cloudConf,
 	}
 
 	masterStartUpScript := template.Must(template.New("masterStartUp").Parse(script))
@@ -64,7 +66,7 @@ func masterStartupScript(cluster *clusterv1.Cluster, machine *clusterv1.Machine,
 	return buf.String(), nil
 }
 
-func nodeStartupScript(cluster *clusterv1.Cluster, machine *clusterv1.Machine, token, script string) (string, error) {
+func nodeStartupScript(cluster *clusterv1.Cluster, machine *clusterv1.Machine, token, script string, cloudConf string) (string, error) {
 	machineSpec, err := openstackconfigv1.MachineSpecFromProviderSpec(machine.Spec.ProviderSpec)
 	if err != nil {
 		return "", err
@@ -85,6 +87,7 @@ func nodeStartupScript(cluster *clusterv1.Cluster, machine *clusterv1.Machine, t
 		PodCIDR:           getSubnet(cluster.Spec.ClusterNetwork.Pods),
 		ServiceCIDR:       getSubnet(cluster.Spec.ClusterNetwork.Services),
 		GetMasterEndpoint: GetMasterEndpoint,
+		CloudConf:         cloudConf,
 	}
 
 	nodeStartUpScript := template.Must(template.New("nodeStartUp").Parse(script))

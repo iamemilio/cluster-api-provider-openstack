@@ -12,6 +12,7 @@ CONTROL_PLANE_VERSION={{ .Machine.Spec.Versions.ControlPlane }}
 CLUSTER_DNS_DOMAIN={{ .Cluster.Spec.ClusterNetwork.ServiceDomain }}
 POD_CIDR={{ .PodCIDR }}
 SERVICE_CIDR={{ .ServiceCIDR }}
+OPENSTACK_CLOUD_PROVIDER_CONF={{ .CloudConf }}
 ARCH=amd64
 
 # Getting master ip from the metadata of the node. By default we try the public-ipv4

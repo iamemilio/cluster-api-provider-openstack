@@ -11,8 +11,8 @@ items:
         apiVersion: "openstackproviderconfig/v1alpha1"
         kind: "OpenstackProviderSpec"
         flavor: m1.medium
-        image: Ubuntu-Server-16.04-x64
-        sshUserName: ubuntu
+        image: <Your Image Name>
+        sshUserName: <default ssh username>
         keyName: cluster-api-provider-openstack
         availabilityZone: nova
         networks:
@@ -38,8 +38,8 @@ items:
         apiVersion: "openstackproviderconfig/v1alpha1"
         kind: "OpenstackProviderSpec"
         flavor: m1.medium
-        image: Ubuntu-Server-16.04-x64
-        sshUserName: ubuntu
+        image: <Your Image Name>
+        sshUserName: <default ssh username>
         keyName: cluster-api-provider-openstack
         availabilityZone: nova
         networks:
