@@ -357,10 +357,13 @@ func (is *InstanceService) InstanceCreate(clusterName string, name string, confi
 			return nil, fmt.Errorf("There is no trunk support. Please disable it")
 		}
 	}
-	clusterTags := []string{
+	machineTags := []string{
 		"cluster-api-provider-openstack",
 		clusterName,
 	}
+
+	machineTags = append(machineTags, config.Tags)
+
 	// Get security groups
 	securityGroups, err := GetSecurityGroups(is, config.SecurityGroups)
 	if err != nil {
@@ -400,7 +403,7 @@ func (is *InstanceService) InstanceCreate(clusterName string, name string, confi
 		}
 
 		if len(net.Filter.Tags) > 0 {
-			clusterTags = append(clusterTags, net.Filter.Tags)
+			machineTags = append(machineTags, net.Filter.Tags)
 		}
 	}
 	userData := base64.StdEncoding.EncodeToString([]byte(cmd))
@@ -432,7 +435,7 @@ func (is *InstanceService) InstanceCreate(clusterName string, name string, confi
 		}
 
 		_, err = attributestags.ReplaceAll(is.networkClient, "ports", port.ID, attributestags.ReplaceAllOpts{
-			Tags: clusterTags}).Extract()
+			Tags: machineTags}).Extract()
 		if err != nil {
 			return nil, fmt.Errorf("Tagging port for server err: %v", err)
 		}
@@ -469,7 +472,7 @@ func (is *InstanceService) InstanceCreate(clusterName string, name string, confi
 			}
 
 			_, err = attributestags.ReplaceAll(is.networkClient, "trunks", trunk.ID, attributestags.ReplaceAllOpts{
-				Tags: clusterTags}).Extract()
+				Tags: machineTags}).Extract()
 			if err != nil {
 				return nil, fmt.Errorf("Tagging trunk for server err: %v", err)
 			}
