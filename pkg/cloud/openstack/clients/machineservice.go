@@ -176,6 +176,10 @@ func NewInstanceServiceFromCloud(cloud clientconfig.Cloud) (*InstanceService, er
 	serverClient, err := openstack.NewComputeV2(provider, gophercloud.EndpointOpts{
 		Region: clientOpts.RegionName,
 	})
+
+	// NOTE(flaper87): This is the minimum required version
+	// to use tags.
+	serverClient.Microversion = "2.52"
 	if err != nil {
 		return nil, fmt.Errorf("Create serviceClient err: %v", err)
 	}
