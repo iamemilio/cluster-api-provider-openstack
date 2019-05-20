@@ -247,6 +247,7 @@ func (oc *OpenstackClient) Create(ctx context.Context, cluster *machinev1.Cluste
 
 	}
 
+	record.Eventf(machine, "CreatedInstance", "Created new instance with id: %s", instance.ID)
 	return oc.updateAnnotation(machine, instance.ID)
 }
 
@@ -272,7 +273,7 @@ func (oc *OpenstackClient) Delete(ctx context.Context, cluster *machinev1.Cluste
 		return oc.handleMachineError(machine, apierrors.DeleteMachine(
 			"error deleting Openstack instance: %v", err))
 	}
-
+	record.Eventf(machine, "DeletedInstance", "Deleted instance with id: %s", instance.ID)
 	return nil
 }
 
