@@ -25,11 +25,7 @@ import (
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/apis"
 	_ "sigs.k8s.io/cluster-api-provider-openstack/pkg/cloud/openstack/options"
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/controller"
-<<<<<<< HEAD
-=======
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/record"
-	clusterapis "sigs.k8s.io/cluster-api/pkg/apis"
->>>>>>> 0911380a... Add Record of instance action (#351)
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
