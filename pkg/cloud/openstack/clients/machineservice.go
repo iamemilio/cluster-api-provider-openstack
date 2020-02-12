@@ -537,7 +537,6 @@ func (is *InstanceService) InstanceCreate(clusterName string, name string, clust
 	if clusterInfra != nil && clusterInfra.Status.PlatformStatus != nil && clusterInfra.Status.PlatformStatus.OpenStack != nil {
 		clusterVips := []string{
 			clusterInfra.Status.PlatformStatus.OpenStack.APIServerInternalIP,
-			clusterInfra.Status.PlatformStatus.OpenStack.NodeDNSIP,
 			clusterInfra.Status.PlatformStatus.OpenStack.IngressIP,
 		}
 
