@@ -3,7 +3,6 @@ WORKDIR /go/src/sigs.k8s.io/cluster-api-provider-openstack
 COPY . .
 
 RUN go build -o ./machine-controller-manager ./cmd/manager
-RUN go build -o ./manager ./vendor/github.com/openshift/cluster-api/cmd/manager
 
 FROM registry.svc.ci.openshift.org/openshift/origin-v4.0:base
 RUN INSTALL_PKGS=" \

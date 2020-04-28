@@ -1,0 +1,184 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: (unknown)
+  creationTimestamp: null
+  name: openstackclusterproviderstatuses.openstackproviderconfig.openshift.io
+spec:
+  group: openstackproviderconfig.openshift.io
+  names:
+    kind: OpenstackClusterProviderStatus
+    listKind: OpenstackClusterProviderStatusList
+    plural: openstackclusterproviderstatuses
+    singular: openstackclusterproviderstatus
+  scope: ""
+  validation:
+    openAPIV3Schema:
+      description: OpenstackClusterProviderStatus contains the status fields relevant
+        to OpenStack in the cluster object.
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        controlPlaneSecurityGroup:
+          description: 'ControlPlaneSecurityGroups contains all the information about
+            the OpenStack Security Group that needs to be applied to control plane
+            nodes. TODO: Maybe instead of two properties, we add a property to the
+            group?'
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            rules:
+              items:
+                description: SecurityGroupRule represent the basic information of
+                  the associated OpenStack Security Group Role.
+                properties:
+                  direction:
+                    type: string
+                  etherType:
+                    type: string
+                  name:
+                    type: string
+                  portRangeMax:
+                    type: integer
+                  portRangeMin:
+                    type: integer
+                  protocol:
+                    type: string
+                  remoteGroupID:
+                    type: string
+                  remoteIPPrefix:
+                    type: string
+                  securityGroupID:
+                    type: string
+                required:
+                - direction
+                - etherType
+                - name
+                - portRangeMax
+                - portRangeMin
+                - protocol
+                - remoteGroupID
+                - remoteIPPrefix
+                - securityGroupID
+                type: object
+              type: array
+          required:
+          - id
+          - name
+          - rules
+          type: object
+        globalSecurityGroup:
+          description: GlobalSecurityGroup contains all the information about the
+            OpenStack Security Group that needs to be applied to all nodes, both control
+            plane and worker nodes.
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            rules:
+              items:
+                description: SecurityGroupRule represent the basic information of
+                  the associated OpenStack Security Group Role.
+                properties:
+                  direction:
+                    type: string
+                  etherType:
+                    type: string
+                  name:
+                    type: string
+                  portRangeMax:
+                    type: integer
+                  portRangeMin:
+                    type: integer
+                  protocol:
+                    type: string
+                  remoteGroupID:
+                    type: string
+                  remoteIPPrefix:
+                    type: string
+                  securityGroupID:
+                    type: string
+                required:
+                - direction
+                - etherType
+                - name
+                - portRangeMax
+                - portRangeMin
+                - protocol
+                - remoteGroupID
+                - remoteIPPrefix
+                - securityGroupID
+                type: object
+              type: array
+          required:
+          - id
+          - name
+          - rules
+          type: object
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        network:
+          description: Network contains all information about the created OpenStack
+            Network. It includes Subnets and Router.
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            router:
+              description: Router represents basic information about the associated
+                OpenStack Neutron Router
+              properties:
+                id:
+                  type: string
+                name:
+                  type: string
+              required:
+              - id
+              - name
+              type: object
+            subnet:
+              description: Subnet represents basic information about the associated
+                OpenStack Neutron Subnet
+              properties:
+                cidr:
+                  type: string
+                id:
+                  type: string
+                name:
+                  type: string
+              required:
+              - cidr
+              - id
+              - name
+              type: object
+          required:
+          - id
+          - name
+          type: object
+      type: object
+  version: v1alpha1
+  versions:
+  - name: v1alpha1
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

@@ -24,8 +24,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/json"
 	"sigs.k8s.io/yaml"
 
-	clusterv1 "github.com/openshift/cluster-api/pkg/apis/cluster/v1alpha1"
-	machinev1 "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
+	machinev1 "github.com/openshift/machine-api-operator/pkg/apis/machine/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/scheme"
 )
 
@@ -38,19 +37,6 @@ var (
 	// SchemeBuilder is used to add go types to the GroupVersionKind scheme
 	SchemeBuilder = &scheme.Builder{GroupVersion: SchemeGroupVersion}
 )
-
-// ClusterConfigFromProviderSpec unmarshals a provider config into an OpenStack Cluster type
-func ClusterSpecFromProviderSpec(providerSpec clusterv1.ProviderSpec) (*OpenstackClusterProviderSpec, error) {
-	if providerSpec.Value == nil {
-		return nil, errors.New("no such providerSpec found in manifest")
-	}
-
-	var config OpenstackClusterProviderSpec
-	if err := yaml.Unmarshal(providerSpec.Value.Raw, &config); err != nil {
-		return nil, err
-	}
-	return &config, nil
-}
 
 // ClusterStatusFromProviderStatus unmarshals a provider status into an OpenStack Cluster Status type
 func ClusterStatusFromProviderStatus(extension *runtime.RawExtension) (*OpenstackClusterProviderStatus, error) {
