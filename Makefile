@@ -13,7 +13,6 @@ PKG := $(shell awk  -F "\"" '/^ignored = / { print $$2 }' Gopkg.toml)
 DEST := $(GOPATH)/src/$(GIT_HOST)/$(BASE_DIR)
 SOURCES := $(shell find $(DEST) -name '*.go')
 
-HAS_DEP := $(shell command -v dep;)
 HAS_LINT := $(shell command -v golint;)
 HAS_GOX := $(shell command -v gox;)
 GOX_PARALLEL ?= 3
@@ -40,15 +39,6 @@ $(GOBIN):
 
 work: $(GOBIN)
 
-depend: work
-ifndef HAS_DEP
-	curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-endif
-	dep ensure
-
-depend-update: work
-	dep ensure -update
-
 build: manager
 
 manager:
@@ -59,9 +49,9 @@ manager:
 
 test: unit functional
 
-check: depend fmt vet lint
+check: fmt vet lint
 
-unit: generate depend
+unit: generate
 	go test -tags=unit $(shell go list ./...) $(TESTARGS)
 
 functional:
@@ -80,7 +70,7 @@ endif
 vet:
 	go vet ./...
 
-cover: generate depend
+cover: generate
 	go test -tags=unit $(shell go list ./...) -cover
 
 docs:
@@ -131,7 +121,7 @@ manifests:
 
 images: openstack-cluster-api-controller manifests
 
-openstack-cluster-api-controller: depend manager manifests
+openstack-cluster-api-controller: manager manifests
 ifeq ($(GOOS),linux)
 	cp bin/manager cmd/manager
 	docker build -t $(REGISTRY)/openstack-cluster-api-controller:$(VERSION) cmd/manager
@@ -150,7 +140,7 @@ version:
 
 .PHONY: build-cross
 build-cross: LDFLAGS += -extldflags "-static"
-build-cross: depend
+build-cross:
 ifndef HAS_GOX
 	go get -u github.com/mitchellh/gox
 endif
@@ -166,5 +156,5 @@ dist: build-cross
 		$(DIST_DIRS) zip -r cluster-api-provider-openstack-$(VERSION)-{}.zip {} \; \
 	)
 
-.PHONY: build clean cover depend docs fmt functional lint realclean \
+.PHONY: build clean cover docs fmt functional lint realclean \
 	relnotes test translation version build-cross dist manifests

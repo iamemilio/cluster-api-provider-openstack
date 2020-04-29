@@ -4,7 +4,7 @@ apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: (unknown)
+    controller-gen.kubebuilder.io/version: (devel)
   creationTimestamp: null
   name: openstackproviderspecs.openstackproviderconfig.openshift.io
 spec:
@@ -14,7 +14,7 @@ spec:
     listKind: OpenstackProviderSpecList
     plural: openstackproviderspecs
     singular: openstackproviderspec
-  scope: ""
+  scope: Namespaced
   validation:
     openAPIV3Schema:
       description: 'OpenstackProviderSpec is the type that will be embedded in a Machine.Spec.ProviderSpec
