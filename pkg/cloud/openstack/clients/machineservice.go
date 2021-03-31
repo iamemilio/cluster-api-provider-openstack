@@ -326,68 +326,42 @@ func getSubnetsByFilter(is *InstanceService, opts *subnets.ListOpts) ([]subnets.
 }
 
 func getOrCreatePort(is *InstanceService, name string, portOpts openstackconfigv1.PortOpts) (*ports.Port, error) {
-	existingPorts, err := listPorts(is, ports.ListOpts{
-		Name: name,
-	})
+	createOpts := ports.CreateOpts{
+		Name:                name,
+		NetworkID:           portOpts.NetworkID,
+		Description:         portOpts.Description,
+		AdminStateUp:        portOpts.AdminStateUp,
+		MACAddress:          portOpts.MACAddress,
+		TenantID:            portOpts.TenantID,
+		ProjectID:           portOpts.ProjectID,
+		SecurityGroups:      portOpts.SecurityGroups,
+		AllowedAddressPairs: portOpts.AllowedAddressPairs,
+	}
+	if len(portOpts.FixedIPs) != 0 {
+		createOpts.FixedIPs = portOpts.FixedIPs
+	}
+	newPort, err := ports.Create(is.networkClient, portsbinding.CreateOptsExt{
+		CreateOptsBuilder: createOpts,
+		HostID:            portOpts.HostID,
+		VNICType:          portOpts.VNICType,
+		Profile:           nil,
+	}).Extract()
 	if err != nil {
 		return nil, err
 	}
-	if len(existingPorts) == 0 {
-		createOpts := ports.CreateOpts{
-			Name:                name,
-			NetworkID:           portOpts.NetworkID,
-			Description:         portOpts.Description,
-			AdminStateUp:        portOpts.AdminStateUp,
-			MACAddress:          portOpts.MACAddress,
-			TenantID:            portOpts.TenantID,
-			ProjectID:           portOpts.ProjectID,
-			SecurityGroups:      portOpts.SecurityGroups,
-			AllowedAddressPairs: portOpts.AllowedAddressPairs,
+
+	if portOpts.PortSecurity != nil && *portOpts.PortSecurity == false {
+		updateOpts := portsecurity.PortUpdateOptsExt{
+			UpdateOptsBuilder:   ports.UpdateOpts{},
+			PortSecurityEnabled: portOpts.PortSecurity,
 		}
-		if len(portOpts.FixedIPs) != 0 {
-			createOpts.FixedIPs = portOpts.FixedIPs
-		}
-		newPort, err := ports.Create(is.networkClient, portsbinding.CreateOptsExt{
-			CreateOptsBuilder: createOpts,
-			HostID:            portOpts.HostID,
-			VNICType:          portOpts.VNICType,
-			Profile:           nil,
-		}).Extract()
+		err = ports.Update(is.networkClient, newPort.ID, updateOpts).ExtractInto(&portWithPortSecurityExtensions)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("Failed to update port security on port %s: %v", newPort.ID, err)
 		}
-
-		if portOpts.PortSecurity != nil && *portOpts.PortSecurity == false {
-			updateOpts := portsecurity.PortUpdateOptsExt{
-				UpdateOptsBuilder:   ports.UpdateOpts{},
-				PortSecurityEnabled: portOpts.PortSecurity,
-			}
-			err = ports.Update(is.networkClient, newPort.ID, updateOpts).ExtractInto(&portWithPortSecurityExtensions)
-			if err != nil {
-				return nil, fmt.Errorf("Failed to update port security on port %s: %v", newPort.ID, err)
-			}
-		}
-
-		return newPort, nil
-	} else if len(existingPorts) == 1 {
-		return &existingPorts[0], nil
 	}
 
-	return nil, fmt.Errorf("multiple ports found with name \"%s\"", name)
-}
-
-func listPorts(is *InstanceService, opts ports.ListOpts) ([]ports.Port, error) {
-	allPages, err := ports.List(is.networkClient, opts).AllPages()
-	if err != nil {
-		return []ports.Port{}, err
-	}
-
-	portList, err := ports.ExtractPorts(allPages)
-	if err != nil {
-		return []ports.Port{}, err
-	}
-
-	return portList, nil
+	return newPort, nil
 }
 
 func CreatePort(is *InstanceService, name string, net ServerNetwork, securityGroups *[]string, allowedAddressPairs *[]ports.AddressPair) (ports.Port, error) {
@@ -565,35 +539,19 @@ func (is *InstanceService) InstanceCreate(clusterName string, name string, clust
 		if net.networkID == "" {
 			return nil, fmt.Errorf("No network was found or provided. Please check your machine configuration and try again")
 		}
-		allPages, err := ports.List(is.networkClient, ports.ListOpts{
-			Name:      name,
-			NetworkID: net.networkID,
-		}).AllPages()
-		if err != nil {
-			return nil, fmt.Errorf("Searching for existing port for server err: %v", err)
+
+		secGroups := &securityGroups
+		addrPairs := &allowedAddressPairs
+		if net.portSecurity != nil && *net.portSecurity == false {
+			secGroups = &[]string{}
+			addrPairs = &[]ports.AddressPair{}
 		}
-		portList, err := ports.ExtractPorts(allPages)
-		if err != nil {
-			return nil, fmt.Errorf("Searching for existing port for server err: %v", err)
+		if _, ok := netsWithoutAllowedAddressPairs[net.networkID]; ok {
+			addrPairs = &[]ports.AddressPair{}
 		}
-		var port ports.Port
-		if len(portList) == 0 {
-			// create server port
-			secGroups := &securityGroups
-			addrPairs := &allowedAddressPairs
-			if net.portSecurity != nil && *net.portSecurity == false {
-				secGroups = &[]string{}
-				addrPairs = &[]ports.AddressPair{}
-			}
-			if _, ok := netsWithoutAllowedAddressPairs[net.networkID]; ok {
-				addrPairs = &[]ports.AddressPair{}
-			}
-			port, err = CreatePort(is, name, net, secGroups, addrPairs)
-			if err != nil {
-				return nil, fmt.Errorf("Failed to create port err: %v", err)
-			}
-		} else {
-			port = portList[0]
+		port, err := CreatePort(is, name, net, secGroups, addrPairs)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to create port err: %v", err)
 		}
 
 		// Update the port with the correct port security settings
@@ -618,31 +576,14 @@ func (is *InstanceService) InstanceCreate(clusterName string, name string, clust
 		})
 
 		if config.Trunk == true {
-			allPages, err := trunks.List(is.networkClient, trunks.ListOpts{
+			// create trunk with the previous port as parent
+			trunkCreateOpts := trunks.CreateOpts{
 				Name:   name,
 				PortID: port.ID,
-			}).AllPages()
-			if err != nil {
-				return nil, fmt.Errorf("Searching for existing trunk for server err: %v", err)
 			}
-			trunkList, err := trunks.ExtractTrunks(allPages)
+			trunk, err := trunks.Create(is.networkClient, trunkCreateOpts).Extract()
 			if err != nil {
-				return nil, fmt.Errorf("Searching for existing trunk for server err: %v", err)
-			}
-			var trunk trunks.Trunk
-			if len(trunkList) == 0 {
-				// create trunk with the previous port as parent
-				trunkCreateOpts := trunks.CreateOpts{
-					Name:   name,
-					PortID: port.ID,
-				}
-				newTrunk, err := trunks.Create(is.networkClient, trunkCreateOpts).Extract()
-				if err != nil {
-					return nil, fmt.Errorf("Create trunk for server err: %v", err)
-				}
-				trunk = *newTrunk
-			} else {
-				trunk = trunkList[0]
+				return nil, fmt.Errorf("Create trunk for server err: %v", err)
 			}
 
 			_, err = attributestags.ReplaceAll(is.networkClient, "trunks", trunk.ID, attributestags.ReplaceAllOpts{
